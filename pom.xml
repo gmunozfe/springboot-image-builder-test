@@ -1,0 +1,202 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kie</groupId>
+  <artifactId>quartz-cluster-springboot-kie-server</artifactId>
+  <version>1.0.0</version>
+  <name>Quartz Cluster Springboot KIE Server</name>
+  <description>KIE Server SpringBoot Sample with Quartz timers on cluster</description>
+
+  <properties>
+    <start-class>org.kie.server.springboot.samples.KieServerApplication</start-class>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <kie.version>7.52.0.Final</kie.version>
+    <spring.version>5.2.9.RELEASE</spring.version>
+    <springboot.version>2.3.4.RELEASE</springboot.version>
+    <junit.version>5.7.0</junit.version>
+
+    <!-- maven plugin versions -->
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+    <maven.invoker.version>3.1.0</maven.invoker.version>
+
+    <!--this is used by logback-test.xml -->
+    <testLogRootLevel>info</testLogRootLevel>
+    <testcontainers.version>1.15.2</testcontainers.version>
+    <assertj.version>3.15.0</assertj.version>
+    <hamcrest.version>2.2</hamcrest.version>
+    <slf4j.version>1.7.30</slf4j.version>
+    <logback.version>1.2.3</logback.version>
+    <postgresql.driver.version>42.2.18</postgresql.driver.version>
+    <hikaricp.version>3.4.5</hikaricp.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.kie</groupId>
+      <artifactId>kie-server-spring-boot-starter</artifactId>
+      <version>${kie.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.activation</groupId>
+          <artifactId>javax.activation-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.validation</groupId>
+          <artifactId>validation-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+      <version>${springboot.version}</version>
+    </dependency>
+    
+    <!-- test dependencies -->
+    
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.driver.version}</version>
+    </dependency>
+    
+    <dependency>
+       <groupId>org.apache.maven.shared</groupId>
+       <artifactId>maven-invoker</artifactId>
+       <version>${maven.invoker.version}</version>
+       <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <version>${spring.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.kie.server</groupId>
+      <artifactId>kie-server-client</artifactId>
+      <version>${kie.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.spec.javax.ws.rs</groupId>
+          <artifactId>jboss-jaxrs-api_2.1_spec</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>jcl-over-slf4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>${hikaricp.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+      <plugins>
+        <plugin>
+          <groupId>org.kie</groupId>
+          <artifactId>kie-maven-plugin</artifactId>
+          <version>${kie.version}</version>
+          <executions>
+            <execution>
+              <id>copy</id>
+              <phase>prepare-package</phase>
+              <goals>
+                <goal>package-dependencies-kjar</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <artifactItems>
+              <artifactItem>
+                <groupId>org.kie.server.testing</groupId>
+                <artifactId>quartz-cluster-sample</artifactId>
+                <version>1.0.0</version>
+              </artifactItem>
+            </artifactItems>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${springboot.version}</version>
+          <configuration>
+              <image>
+                  <name>${spring-boot.build-image.name}</name>
+              </image>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+          <configuration>
+            <source>8</source>
+            <target>8</target>
+          </configuration>
+          </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+          <configuration>
+            <systemPropertyVariables>
+              <keycloak.http.port>8080</keycloak.http.port>
+              <keycloak.image>quay.io/keycloak/keycloak</keycloak.image>
+              <keycloak.version>${version.org.keycloak}</keycloak.version>
+            </systemPropertyVariables>
+            <reuseForks>false</reuseForks>
+          </configuration>
+        </plugin>
+      </plugins>
+  </build>
+
+</project>
