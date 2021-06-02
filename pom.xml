@@ -10,7 +10,7 @@
   <properties>
     <start-class>org.kie.server.springboot.samples.KieServerApplication</start-class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <kie.version>7.52.0.Final</kie.version>
+    <kie.version>7.54.0.Final</kie.version>
     <spring.version>5.2.9.RELEASE</spring.version>
     <springboot.version>2.3.4.RELEASE</springboot.version>
     <junit.version>5.7.0</junit.version>
@@ -54,6 +54,13 @@
       <version>${springboot.version}</version>
     </dependency>
     
+    <dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <version>1.4.195</version>
+    <scope>runtime</scope>
+</dependency>
+
     <!-- test dependencies -->
     
     <dependency>
@@ -169,10 +176,21 @@
           <artifactId>spring-boot-maven-plugin</artifactId>
           <version>${springboot.version}</version>
           <configuration>
+              <layers>
+                <enabled>true</enabled>
+                <configuration>${project.basedir}/src/layers.xml</configuration>
+              </layers>
               <image>
                   <name>${spring-boot.build-image.name}</name>
               </image>
           </configuration>
+          <executions>
+            <execution>
+                <goals>
+                    <goal>repackage</goal>
+                </goals>
+            </execution>
+       </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
