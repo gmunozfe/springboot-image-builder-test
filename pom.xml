@@ -2,19 +2,21 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.kie</groupId>
-  <artifactId>quartz-cluster-springboot-kie-server</artifactId>
+  <artifactId>springboot-image-builder-test</artifactId>
   <version>1.0.0</version>
-  <name>Quartz Cluster Springboot KIE Server</name>
-  <description>KIE Server SpringBoot Sample with Quartz timers on cluster</description>
+  <name>SpringBoot KIE Server Image Builder Test</name>
+  <description>Tests for SpringBoot KIE Server Image Builder</description>
 
   <properties>
     <start-class>org.kie.server.springboot.samples.KieServerApplication</start-class>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <kie.version>7.54.0.Final</kie.version>
-    <spring.version>5.2.9.RELEASE</spring.version>
-    <springboot.version>2.3.4.RELEASE</springboot.version>
+    <kie.version>7.74.0-SNAPSHOT</kie.version>
+    <spring.version>5.3.20</spring.version>
+    <springboot.version>2.5.12</springboot.version>
     <junit.version>5.7.0</junit.version>
-
+    
+    <image.workdir>/workspace/BOOT-INF</image.workdir>
+    
     <!-- maven plugin versions -->
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
@@ -28,7 +30,6 @@
     <slf4j.version>1.7.30</slf4j.version>
     <logback.version>1.2.3</logback.version>
     <postgresql.driver.version>42.2.18</postgresql.driver.version>
-    <hikaricp.version>3.4.5</hikaricp.version>
   </properties>
 
   <dependencies>
@@ -54,13 +55,6 @@
       <version>${springboot.version}</version>
     </dependency>
     
-    <dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <version>1.4.195</version>
-    <scope>runtime</scope>
-</dependency>
-
     <!-- test dependencies -->
     
     <dependency>
@@ -137,13 +131,6 @@
       <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
-    
-    <dependency>
-      <groupId>com.zaxxer</groupId>
-      <artifactId>HikariCP</artifactId>
-      <version>${hikaricp.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -164,9 +151,14 @@
           <configuration>
             <artifactItems>
               <artifactItem>
-                <groupId>org.kie.server.testing</groupId>
-                <artifactId>quartz-cluster-sample</artifactId>
+                <groupId>org.kie.server.springboot.samples</groupId>
+                <artifactId>evaluation</artifactId>
                 <version>1.0.0</version>
+              </artifactItem>
+              <artifactItem>
+                <groupId>org.kie.server.springboot.samples</groupId>
+                <artifactId>evaluation</artifactId>
+                <version>2.0.0</version>
               </artifactItem>
             </artifactItems>
           </configuration>
@@ -184,15 +176,48 @@
                   <name>${spring-boot.build-image.name}</name>
               </image>
           </configuration>
-          <executions>
-            <execution>
-                <goals>
-                    <goal>repackage</goal>
-                </goals>
-            </execution>
-       </executions>
-        </plugin>
-        <plugin>
+       </plugin>
+       <plugin>
+         <groupId>com.google.cloud.tools</groupId>
+         <artifactId>jib-maven-plugin</artifactId>
+         <version>3.2.1</version>
+         <dependencies>
+           <dependency>
+             <groupId>com.google.cloud.tools</groupId>
+             <artifactId>jib-layer-filter-extension-maven</artifactId>
+             <version>0.3.0</version>
+           </dependency>
+         </dependencies>
+         <configuration>
+           <to>
+             <image>${spring-boot.build-image.name}</image>
+           </to>
+           <container>
+             <appRoot>${image.workdir}</appRoot>
+           </container>
+           <pluginExtensions>
+            <pluginExtension> 
+              <implementation>com.google.cloud.tools.jib.maven.extension.layerfilter.JibLayerFilterExtension</implementation>
+              <configuration implementation="com.google.cloud.tools.jib.maven.extension.layerfilter.Configuration">
+                <filters>
+                  <filter>
+                    <glob>${image.workdir}/resources/KIE-INF/lib/*</glob>
+                  </filter>
+                </filters>
+              </configuration>
+            </pluginExtension>
+          </pluginExtensions>
+           <extraDirectories>
+             <paths>
+               <path>
+                 <from>target/classes/KIE-INF/lib/</from>
+                 <into>${image.workdir}/classes/KIE-INF/lib/</into>
+               </path>
+             </paths>
+           </extraDirectories>
+         </configuration>
+       </plugin>
+       <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin.version}</version>
@@ -207,14 +232,28 @@
           <version>${maven-surefire-plugin.version}</version>
           <configuration>
             <systemPropertyVariables>
-              <keycloak.http.port>8080</keycloak.http.port>
-              <keycloak.image>quay.io/keycloak/keycloak</keycloak.image>
-              <keycloak.version>${version.org.keycloak}</keycloak.version>
-            </systemPropertyVariables>
-            <reuseForks>false</reuseForks>
+              <org.kie.samples.goal>${org.kie.samples.goal}</org.kie.samples.goal>
+             </systemPropertyVariables>
           </configuration>
         </plugin>
       </plugins>
   </build>
-
+  
+  <profiles>
+    <profile>
+      <id>jib</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <org.kie.samples.goal>jib:dockerBuild</org.kie.samples.goal>
+     </properties>
+    </profile>
+    <profile>
+      <id>buildpack</id>
+      <properties>
+        <org.kie.samples.goal>spring-boot:build-image</org.kie.samples.goal>
+     </properties>
+    </profile>
+  </profiles>
 </project>

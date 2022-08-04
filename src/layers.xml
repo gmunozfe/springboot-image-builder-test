@@ -12,12 +12,13 @@
         <into layer="application" />
     </application>
     <dependencies>
+        <into layer="application">
+            <includeModuleDependencies />
+        </into>
         <into layer="snapshot-dependencies">
             <include>*:*:*SNAPSHOT</include>
         </into>
-        <into layer="dependencies">
-            <includeModuleDependencies />
-        </into>
+        <into layer="dependencies" />
     </dependencies>
     <layerOrder>
         <layer>dependencies</layer>

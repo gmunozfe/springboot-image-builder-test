@@ -46,7 +46,7 @@ public class KieServerApplication {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(KieServerApplication.class);
     
-    //private static final String PATH = "/workspace/BOOT-INF/classes/kjars/quartz-cluster-sample";
+    private static final String PATH = "/workspace/BOOT-INF/classes/kjars/quartz-cluster-sample";
     
     public static void main(String[] args) {
         SpringApplication.run(KieServerApplication.class, args);

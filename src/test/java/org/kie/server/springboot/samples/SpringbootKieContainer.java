@@ -14,7 +14,6 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.DigestUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
@@ -28,7 +27,12 @@ public class SpringbootKieContainer extends GenericContainer<SpringbootKieContai
     private static final Logger logger = LoggerFactory.getLogger(SpringbootKieContainer.class);
     
     static {
-    	File cwd = new File("./src/test/resources/kjars/quartz-cluster-sample");
+        installKjar("./src/test/resources/kjars/evaluation");
+        installKjar("./src/test/resources/kjars/evaluation2");
+    }
+
+	private static void installKjar(String path) {
+		File cwd = new File(path);
     	
     	Properties properties = new Properties();
         // Avoid recursion
@@ -50,14 +54,14 @@ public class SpringbootKieContainer extends GenericContainer<SpringbootKieContai
         if (invocationResult!=null && invocationResult.getExitCode() != 0) {
             throw new RuntimeException(invocationResult.getExecutionException());
         }
-    }
+	}
     
     private static final Future<String> IMAGE_FUTURE = new LazyFuture<String>() {
         @Override
         protected String resolve() {
             File cwd = new File(".");
             
-            // Make it unique per folder (for caching)
+            // Make it unique 
             String imageName = String.format(
                     "local/kie-server-springboot:%s",
                     System.currentTimeMillis()
@@ -72,7 +76,7 @@ public class SpringbootKieContainer extends GenericContainer<SpringbootKieContai
             
             InvocationRequest request = new DefaultInvocationRequest()
                     .setPomFile(new File(cwd, "pom.xml"))
-                    .setGoals(Arrays.asList("spring-boot:build-image"))
+                    .setGoals(Arrays.asList("package", System.getProperty("org.kie.samples.goal")))
                     .setInputStream(new ByteArrayInputStream(new byte[0]))
                     .setProperties(properties);
 
@@ -104,7 +108,8 @@ public class SpringbootKieContainer extends GenericContainer<SpringbootKieContai
         
         withNetwork(Network.SHARED);
         withEnv("SPRING_DATASOURCE_URL", "jdbc:postgresql://db:5432/rhpamdatabase?user=rhpamuser&password=rhpampassword");
-        withEnv("quartz.datasource.url", "jdbc:postgresql://db:5432/rhpamdatabase?user=rhpamuser&password=rhpampassword");
+        //withEnv("org.kie.maven.resolver.folder", "/my-workspace");
+        //withEnv("JAVA_TOOL_OPTIONS", "-Dorg.kie.maven.resolver.folder=/my-workspace2");
         waitingFor(Wait.forLogMessage(".*Started KieServerApplication in.*", 1).withStartupTimeout(Duration.ofMinutes(5L)));
     }
 
